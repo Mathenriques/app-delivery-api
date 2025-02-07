@@ -1,6 +1,7 @@
 package com.deliveryapp.aplicativo_delivery.application.services;
 
 import com.deliveryapp.aplicativo_delivery.application.exceptions.FailedCreateUserException;
+import com.deliveryapp.aplicativo_delivery.application.exceptions.UserAlreadyExistsException;
 import com.deliveryapp.aplicativo_delivery.domain.models.User;
 import com.deliveryapp.aplicativo_delivery.infrastructure.persistence.IUserRepository;
 import com.deliveryapp.aplicativo_delivery.presentation.dtos.UserDTO;
@@ -31,7 +32,15 @@ public class UserService {
 
     public UserDTO saveUser(User user) throws Exception {
         User savedUser;
+
+        Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
+        if (existingUser.isPresent()) {
+            throw new UserAlreadyExistsException();
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+
         try {
             savedUser = userRepository.save(user);
         } catch (Exception e) {
@@ -45,11 +54,11 @@ public class UserService {
 //    }
 //
 //
-//    public void deletarUsuario(String id) {
+//    protected void deletarUsuario(String id) {
 //        userRepository.deleteById(id);
 //    }
 //
-//    public User atualizarUsuario(String id, User usuarioAtualizado) {
+//    protected User atualizarUsuario(String id, User usuarioAtualizado) {
 //        usuarioAtualizado.setId(id);
 //        return userRepository.save(usuarioAtualizado);
 //    }
