@@ -1,13 +1,16 @@
 package com.deliveryapp.aplicativo_delivery.application.services;
 
+import com.deliveryapp.aplicativo_delivery.application.exceptions.FailedCreateUserException;
 import com.deliveryapp.aplicativo_delivery.domain.models.User;
 import com.deliveryapp.aplicativo_delivery.infrastructure.persistence.IUserRepository;
+import com.deliveryapp.aplicativo_delivery.presentation.dtos.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -17,14 +20,24 @@ public class UserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(user -> {
+                    return new UserDTO(user.getPoid(), user.getName(), user.getEmail());
+                })
+                .collect(Collectors.toList());
     }
 
-    public User saveUser(User user) {
+    public UserDTO saveUser(User user) throws Exception {
+        User savedUser;
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        try {
+            savedUser = userRepository.save(user);
+        } catch (Exception e) {
+            throw new FailedCreateUserException();
+        }
+        return new UserDTO(savedUser.getPoid(), savedUser.getName(), savedUser.getEmail());
     }
 
 //    public Optional<User> buscarUsuarioPorId(String id) {
